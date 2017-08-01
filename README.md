@@ -1,0 +1,1 @@
+# mcp-openshift-ui-extension
