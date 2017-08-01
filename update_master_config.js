@@ -1,9 +1,9 @@
 var yaml = require('js-yaml');
 var fs = require('fs');
 
-var mcpDir = '/var/lib/origin/openshift.local.config';
-var mcpJSFile = mcpDir + '/mcp.js';
-var mcpCSSFile = mcpDir + '/mcp.css';
+var mobileDir = '/var/lib/origin/openshift.local.config/public';
+var mcpJSFile = mobileDir + '/mcp.js';
+var mcpCSSFile = mobileDir + '/mcp.css';
 var configFile = process.argv.slice(-1)[0];
 var yamlFile = yaml.safeLoad(fs.readFileSync(configFile));
 
@@ -21,6 +21,21 @@ if (yamlFile.assetConfig.extensionScripts.indexOf(mcpJSFile) < 0) {
 yamlFile.assetConfig.extensionStylesheets = yamlFile.assetConfig.extensionStylesheets || [];
 if (yamlFile.assetConfig.extensionStylesheets.indexOf(mcpCSSFile) < 0) {
   yamlFile.assetConfig.extensionStylesheets.push(mcpCSSFile);
+}
+
+// Register mcp extension
+yamlFile.assetConfig.extensions = yamlFile.assetConfig.extensions || [];
+var mcpExtensionAdded = false;
+yamlFile.assetConfig.extensions.forEach(function(extension) {
+  if (extension.name === 'mcp') {
+    mcpExtensionAdded = true;
+  }
+});
+if (!mcpExtensionAdded) {
+  yamlFile.assetConfig.extensions.push({
+    name: 'mcp',
+    sourceDirectory: mobileDir
+  });
 }
 
 // write file

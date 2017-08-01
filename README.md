@@ -17,3 +17,5 @@ Install the MCP Extension
 
 The MCP Extension should now be visible in the OpenShift Web Console after the 'origin' container has restarted.
 Visit https://127.0.0.1:8443 to see the Console.
+
+**TODO:** Add instructions for adding the `mobileapp` resource type via the mobile-apiserver
