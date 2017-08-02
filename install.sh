@@ -3,6 +3,14 @@
 set -x
 set -e
 
+# Mobile API Server repo location
+MOBILE_API_SERVER_REPO=github.com/feedhenry/mobile-apiserver
+MOBILE_API_SERVER_DIR=$GOPATH/src/$MOBILE_API_SERVER_REPO
+MOBILE_API_SERVER_INSTALL_SCRIPT=$MOBILE_API_SERVER_DIR/hack/install-apiserver/openshift/install.sh
+
+# Pull down the mobile-api server repo if not already cloned
+[[ -d $MOBILE_API_SERVER_DIR ]] || go get -u $MOBILE_API_SERVER_REPO
+
 # Start OpenShift with the current directory as the config dir
 # Using the current directory as the config dir is important for extension development
 # This allows changing of extension files and having them already mounted in the origin container
@@ -24,10 +32,6 @@ sudo chmod 644 $OPENSHIFT_MASTER_CONFIG
 
 # Allow HostDir Volumes
 oc patch scc/restricted -p '{"allowHostDirVolumePlugin":true}'
-
-# Mobile API Server repo location
-MOBILE_API_SERVER_DIR=$GOPATH/src/github.com/feedhenry/mobile-apiserver
-MOBILE_API_SERVER_INSTALL_SCRIPT=$MOBILE_API_SERVER_DIR/hack/install-apiserver/openshift/install.sh
 
 # Install the Mobile API Server
 cd $MOBILE_API_SERVER_DIR
