@@ -4,13 +4,10 @@ window.OPENSHIFT_CONSTANTS.PROJECT_NAVIGATION.unshift({
   label: "Mobile",
   iconClass: "fa fa-mobile",
   href: "/mobile",
-  prefixes: [                   // Primary nav items can also specify prefixes to trigger
-    "/mobile/"         // active state
-  ],
-  isValid: function() {         // Primary or secondary items can define an isValid
-    return true;           // function. If present it will be called to test whether
-                                // the item should be shown, it should return a boolean
+  prefixes: ["/mobile/"],
+  isValid: function() {
     // TODO: Can this check if any mobile apps exist first?
+    return true;
   }
 });
 
@@ -24,27 +21,26 @@ angular
       });
     }
   )
-  .controller('MobileOverviewController', ['$scope', '$controller', function ($scope, $controller) {
+  .controller('MobileOverviewController', ['$scope', '$controller', '$routeParams', 'ProjectsService', 'APIService', 'DataService', function ($scope, $controller, $routeParams, ProjectsService, APIService, DataService) {
     // Initialize the super class and extend it.
     angular.extend(this, $controller('OverviewController', {$scope: $scope}));
     console.log('MobileOverviewController');
 
-    // TODO: use a Service to retrieve Mobile Apps
-    $scope.mobileapps = [{
-      metadata: {
-        name: 'Mock Android App'
-      },
-      spec: {
-        type: 'android'
-      }
-    }, {
-      metadata: {
-        name: 'Mock iOS App'
-      },
-      spec: {
-        type: 'ios'
-      }
-    }];
+    ProjectsService
+      .get($routeParams.project)
+      .then(_.spread(function(project, context) {
+        
+        $scope.project = project;
+        $scope.context = context;
+        DataService.list({
+            group: 'mobile.k8s.io',
+            resource: 'mobileapps'
+          }, $scope.context).then(function(resources) {
+          $scope.mobileapps = resources.by("metadata.name");
+          $scope.emptyMessage = "No " + APIService.kindToResource('MobileApp', true) + " to show";
+        });
+
+      }));
    }]);
 
 hawtioPluginLoader.addModule('mobileOverviewExtension');
