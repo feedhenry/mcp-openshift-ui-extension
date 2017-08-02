@@ -3,13 +3,7 @@
 
 ## Local Installation
 
-Start OpenShift
-
-```
-oc cluster up --service-catalog --host-config-dir=${PWD} --version='v3.6.0-rc.0'
-```
-
-Install the MCP Extension
+Start openshift, configure it for MCP Extension development, and install the mobile apiserver
 
 ```
 ./install.sh
@@ -17,5 +11,3 @@ Install the MCP Extension
 
 The MCP Extension should now be visible in the OpenShift Web Console after the 'origin' container has restarted.
 Visit https://127.0.0.1:8443 to see the Console.
-
-**TODO:** Add instructions for adding the `mobileapp` resource type via the mobile-apiserver

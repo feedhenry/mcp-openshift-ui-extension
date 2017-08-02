@@ -3,41 +3,41 @@
 set -x
 set -e
 
-# What platform are we running on?
-unameOut="$(uname -s)"
-case "${unameOut}" in
-    Linux*)     machine=Linux;;
-    Darwin*)    machine=Mac;;
-    *)          echo "Unknown uname ${unameOut}. Must be Linux or Darwin. Exiting"
-esac
+# Start OpenShift with the current directory as the config dir
+# Using the current directory as the config dir is important for extension development
+# This allows changing of extension files and having them already mounted in the origin container
+oc cluster up --service-catalog --host-config-dir=${PWD} --version='v3.6.0-rc.0'
 
-# Get location of master-config.yaml
-#OPENSHIFT_CONFIG_DIR=`docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/lib/origin/openshift.local.config"}}{{.Source}}{{end}}{{end}}' origin`
+# Grant unauthenticated access to the template service broker api
+oc login -u system:admin
+oc adm policy add-cluster-role-to-group system:openshift:templateservicebroker-client system:unauthenticated system:authenticated
+
+# master-config.yaml location
 OPENSHIFT_CONFIG_DIR=$PWD
-# if [[ -z "$OPENSHIFT_CONFIG_DIR" ]]; then
-#   echo "OPENSHIFT_CONFIG_DIR could not be determined. Is a local oc cluster running?"
-#   exit 1;
-# fi
 OPENSHIFT_MASTER_CONFIG=$OPENSHIFT_CONFIG_DIR/master/master-config.yaml
 MCP_BASE_DIR=$OPENSHIFT_CONFIG_DIR
-
-# Download yaml cli if not already installed
-if hash yaml 2>/dev/null; then
-  echo 'yaml already installed.'
-else
-  if [ "$machine" == "Darwin" ]; then
-    yaml_download_url=https://github.com/mikefarah/yaml/releases/download/1.11/yaml_darwin_amd64
-  elif [ "$machine" == "Linux" ]; then
-    yaml_download_url=https://github.com/mikefarah/yaml/releases/download/1.11/yaml_linux_amd64
-  fi
-  sudo curl -J -L $yaml_download_url -o /usr/bin/yaml
-  sudo chmod +x /usr/bin/yaml
-fi
 
 # Enable Extension Development
 sudo chmod 666 $OPENSHIFT_MASTER_CONFIG
 node update_master_config.js $OPENSHIFT_MASTER_CONFIG
 sudo chmod 644 $OPENSHIFT_MASTER_CONFIG
 
-# Restart openshift
+# Allow HostDir Volumes
+oc patch scc/restricted -p '{"allowHostDirVolumePlugin":true}'
+
+# Mobile API Server repo location
+MOBILE_API_SERVER_DIR=$GOPATH/src/github.com/feedhenry/mobile-apiserver
+MOBILE_API_SERVER_INSTALL_SCRIPT=$MOBILE_API_SERVER_DIR/hack/install-apiserver/openshift/install.sh
+
+# Install the Mobile API Server
+cd $MOBILE_API_SERVER_DIR
+bash -x $MOBILE_API_SERVER_INSTALL_SCRIPT
+
+# TODO: Wait for successful start of the Mobile API Server
+
+# Grant unauthenticated access to the Mobile API Server
+oc login -u system:admin
+oc adm policy add-cluster-role-to-group mobile-api-caller system:unauthenticated system:anonymous system:authenticated
+
+# Restart openshift to pick up master-config.yaml changes for extensions
 docker restart origin
