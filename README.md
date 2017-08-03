@@ -1,5 +1,7 @@
 # mcp-openshift-ui-extension
 
+**NO LONGER IN USE**
+Moved to https://github.com/feedhenry/mobile-control-panel/tree/master/ui
 
 ## Local Installation
 
